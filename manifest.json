@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "AWSApps CLI Verifier",
+  "version": "1.0",
+  "description": "Automatically clicks the CLI verification button on awsapps.com",
+  "action": {
+    "default_title": "AWSApps CLI Verifier"
+  },
+  "host_permissions": [
+    "https://*.awsapps.com/*",
+    "*://*.signin.aws.amazon.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.awsapps.com/*", "*://*.signin.aws.amazon.com/*"],
+      "js": ["contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

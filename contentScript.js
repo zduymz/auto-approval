@@ -1,5 +1,7 @@
 // contentScript.js
 (function() {
+  let lastClicked = null;
+
   /**
    * Attempts to find the target button by ID or data-testid.
    * @returns {HTMLElement|null}
@@ -10,47 +12,42 @@
   }
 
   /**
-   * Clicks the given button and logs an appropriate message.
+   * Clicks the given button if it hasn't been clicked already.
    * @param {HTMLElement} btn
    */
   function clickButton(btn) {
+    if (btn === lastClicked) return;
     btn.click();
+    lastClicked = btn;
     const id = btn.id || btn.getAttribute('data-testid');
     console.log(`[AWSApps CLI Verifier] Button clicked: ${id}`);
   }
 
   /**
-   * Try to find and click the button immediately.
-   * @returns {boolean} true if clicked
+   * Main check: find and click target button.
    */
-  function tryImmediateClick() {
+  function checkAndClick() {
     const btn = findTargetButton();
-    if (btn) {
-      clickButton(btn);
-      return true;
-    }
-    return false;
+    if (btn) clickButton(btn);
   }
 
-  // Immediate attempt
-  if (tryImmediateClick()) return;
+  // Initial run
+  checkAndClick();
 
-  // Observe DOM for dynamic injection
-  const observer = new MutationObserver((mutations, obs) => {
-    const btn = findTargetButton();
-    if (btn) {
-      clickButton(btn);
-      obs.disconnect();
-      clearInterval(intervalId);
-    }
-  });
+  // Re-run on DOM mutations
+  const observer = new MutationObserver(checkAndClick);
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Poll as a fallback
-  const intervalId = setInterval(() => {
-    if (tryImmediateClick()) {
-      clearInterval(intervalId);
-      observer.disconnect();
-    }
-  }, 500);
+  // Listen for SPA navigation events
+  const origPush = history.pushState;
+  history.pushState = function(...args) {
+    origPush.apply(this, args);
+    setTimeout(checkAndClick, 100);
+  };
+  const origReplace = history.replaceState;
+  history.replaceState = function(...args) {
+    origReplace.apply(this, args);
+    setTimeout(checkAndClick, 100);
+  };
+  window.addEventListener('popstate', () => setTimeout(checkAndClick, 100));
 })();

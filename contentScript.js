@@ -24,30 +24,43 @@
   }
 
   /**
-   * Main check: find and click target button.
+   * Checks for success alert and closes window if found.
    */
-  function checkAndClick() {
+  function checkSuccessAndClose() {
+    const alertDiv = document.querySelector('[data-analytics-alert="success"]');
+    if (alertDiv) {
+      console.log('[AWSApps CLI Verifier] Success alert detected. Closing window.');
+      window.close();
+    }
+  }
+
+  /**
+   * Main check: find and click target button, then schedule success check after 5 seconds.
+   */
+  function checkAndAct() {
     const btn = findTargetButton();
     if (btn) clickButton(btn);
+    // Delay closing check by 5 seconds
+    setTimeout(checkSuccessAndClose, 5000);
   }
 
   // Initial run
-  checkAndClick();
+  checkAndAct();
 
   // Re-run on DOM mutations
-  const observer = new MutationObserver(checkAndClick);
+  const observer = new MutationObserver(checkAndAct);
   observer.observe(document.body, { childList: true, subtree: true });
 
   // Listen for SPA navigation events
   const origPush = history.pushState;
   history.pushState = function(...args) {
     origPush.apply(this, args);
-    setTimeout(checkAndClick, 100);
+    setTimeout(checkAndAct, 100);
   };
   const origReplace = history.replaceState;
   history.replaceState = function(...args) {
     origReplace.apply(this, args);
-    setTimeout(checkAndClick, 100);
+    setTimeout(checkAndAct, 100);
   };
-  window.addEventListener('popstate', () => setTimeout(checkAndClick, 100));
+  window.addEventListener('popstate', () => setTimeout(checkAndAct, 100));
 })();

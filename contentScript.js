@@ -24,13 +24,13 @@
   }
 
   /**
-   * Checks for success alert and closes window if found.
+   * Checks for success alert and requests tab close if found.
    */
   function checkSuccessAndClose() {
     const alertDiv = document.querySelector('[data-analytics-alert="success"]');
     if (alertDiv) {
-      console.log('[AWSApps CLI Verifier] Success alert detected. Closing window.');
-      window.close();
+      console.log('[AWSApps CLI Verifier] Success alert detected. Requesting tab close.');
+      chrome.runtime.sendMessage({ action: 'closeTab' });
     }
   }
 
@@ -41,7 +41,7 @@
     const btn = findTargetButton();
     if (btn) clickButton(btn);
     // Delay closing check by 5 seconds
-    setTimeout(checkSuccessAndClose, 5000);
+    setTimeout(checkSuccessAndClose, 500);
   }
 
   // Initial run
